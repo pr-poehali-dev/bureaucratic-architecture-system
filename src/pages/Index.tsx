@@ -1,10 +1,36 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Icon from '@/components/ui/icon';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
+interface Case {
+  id: number;
+  title: string;
+  organization: string;
+  description: string;
+  implementationYear: number;
+  rulesGenerated: number;
+  efficiencyIncrease: number;
+  staffCount: number;
+  durationMonths: number;
+  status: string;
+}
+
 const Index = () => {
   const [activeLevel, setActiveLevel] = useState(0);
+  const [cases, setCases] = useState<Case[]>([]);
+  const [selectedCase, setSelectedCase] = useState<Case | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('https://functions.poehali.dev/20827257-5edf-4ebd-834c-62d8d126ab87')
+      .then(res => res.json())
+      .then(data => {
+        setCases(data.cases || []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
 
   const architectureLevels = [
     { id: 0, name: 'Запрос', nodes: 1 },
@@ -243,6 +269,122 @@ const Index = () => {
             ))}
           </div>
         </section>
+
+        <section className="space-y-8">
+          <div className="text-center space-y-3">
+            <h2 className="text-3xl md:text-5xl font-bold">Реализованные проекты</h2>
+            <p className="text-muted-foreground text-lg">Кейсы успешных внедрений по всей стране</p>
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center py-16">
+              <Icon name="Loader" size={48} className="animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+              {cases.map((caseItem) => (
+                <Card
+                  key={caseItem.id}
+                  className="p-6 space-y-4 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/10 hover:border-primary cursor-pointer group"
+                  onClick={() => setSelectedCase(caseItem)}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-xl font-semibold group-hover:text-primary transition-colors mb-1">
+                        {caseItem.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">{caseItem.organization}</p>
+                    </div>
+                    <div className="text-2xl font-bold text-primary">{caseItem.implementationYear}</div>
+                  </div>
+
+                  <p className="text-muted-foreground text-sm line-clamp-3">{caseItem.description}</p>
+
+                  <div className="grid grid-cols-2 gap-3 pt-2">
+                    <div className="space-y-1">
+                      <div className="text-xs text-muted-foreground">Правил создано</div>
+                      <div className="text-lg font-bold text-primary">+{caseItem.rulesGenerated}</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-xs text-muted-foreground">Рост эффективности</div>
+                      <div className="text-lg font-bold text-secondary">+{caseItem.efficiencyIncrease}%</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-xs text-muted-foreground">Сотрудников</div>
+                      <div className="text-lg font-bold">{caseItem.staffCount}</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-xs text-muted-foreground">Длительность</div>
+                      <div className="text-lg font-bold">{caseItem.durationMonths} мес</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-2 text-sm text-primary group-hover:translate-x-2 transition-transform">
+                    <span>Подробнее</span>
+                    <Icon name="ArrowRight" size={16} />
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {selectedCase && (
+          <div 
+            className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-fade-in"
+            onClick={() => setSelectedCase(null)}
+          >
+            <Card 
+              className="max-w-3xl w-full max-h-[90vh] overflow-y-auto p-8 space-y-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <h2 className="text-3xl font-bold mb-2">{selectedCase.title}</h2>
+                  <p className="text-lg text-muted-foreground">{selectedCase.organization}</p>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => setSelectedCase(null)}
+                >
+                  <Icon name="X" size={24} />
+                </Button>
+              </div>
+
+              <p className="text-foreground leading-relaxed">{selectedCase.description}</p>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 py-6 border-y border-border">
+                <div className="text-center space-y-2">
+                  <div className="text-3xl font-bold text-primary">+{selectedCase.rulesGenerated}</div>
+                  <div className="text-sm text-muted-foreground">Правил создано</div>
+                </div>
+                <div className="text-center space-y-2">
+                  <div className="text-3xl font-bold text-secondary">+{selectedCase.efficiencyIncrease}%</div>
+                  <div className="text-sm text-muted-foreground">Рост эффективности</div>
+                </div>
+                <div className="text-center space-y-2">
+                  <div className="text-3xl font-bold">{selectedCase.staffCount}</div>
+                  <div className="text-sm text-muted-foreground">Сотрудников</div>
+                </div>
+                <div className="text-center space-y-2">
+                  <div className="text-3xl font-bold">{selectedCase.durationMonths}</div>
+                  <div className="text-sm text-muted-foreground">Месяцев</div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-primary/10 border border-primary/30">
+                <div className="p-2 rounded-lg bg-primary/20">
+                  <Icon name="CheckCircle" size={24} className="text-primary" />
+                </div>
+                <div>
+                  <div className="font-semibold">Статус проекта</div>
+                  <div className="text-sm text-muted-foreground capitalize">{selectedCase.status}</div>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
 
         <section className="py-16 text-center space-y-6">
           <h2 className="text-3xl md:text-5xl font-bold">Готовы к внедрению?</h2>
